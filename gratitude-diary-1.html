@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Little Sanctuary — Gratitude Diary</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: linear-gradient(135deg, #fdf6ec 0%, #fce9d4 40%, #f5d5c0 100%);
+      font-family: 'Georgia', 'Times New Roman', serif;
+      position: relative; overflow-x: hidden;
+    }
+    body::before {
+      content: ''; position: fixed; top: -80px; right: -80px;
+      width: 320px; height: 320px; border-radius: 50%;
+      background: rgba(255,180,140,0.18); pointer-events: none;
+    }
+    body::after {
+      content: ''; position: fixed; bottom: -60px; left: -60px;
+      width: 260px; height: 260px; border-radius: 50%;
+      background: rgba(255,200,160,0.15); pointer-events: none;
+    }
+    header { padding: 32px 24px 16px; text-align: center; }
+    .subtitle { margin: 0; font-size: 12px; letter-spacing: 4px; color: #c4956a; text-transform: uppercase; font-family: sans-serif; }
+    h1 { margin: 6px 0 0; font-size: clamp(28px,6vw,42px); font-weight: normal; color: #5a3e2b; letter-spacing: -0.5px; line-height: 1.1; }
+    .today-date { margin-top: 8px; color: #a07850; font-size: 13px; font-style: italic; font-family: sans-serif; }
+    .nav { display: flex; justify-content: center; gap: 4px; margin-top: 20px; flex-wrap: wrap; }
+    .nav-btn { padding: 8px 20px; border: none; border-radius: 40px; cursor: pointer; font-family: sans-serif; font-size: 13px; font-weight: 500; transition: all 0.2s; background: rgba(196,149,106,0.12); color: #a07850; letter-spacing: 0.3px; }
+    .nav-btn.active { background: #c4956a; color: #fff; }
+
+    /* Storage bar */
+    .storage-bar {
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+      margin-top: 12px; flex-wrap: wrap;
+    }
+    .storage-status {
+      font-family: sans-serif; font-size: 11px; color: #a07850;
+      background: rgba(255,255,255,0.5); padding: 4px 12px;
+      border-radius: 20px; border: 1px solid rgba(196,149,106,0.2);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .storage-dot { width: 6px; height: 6px; border-radius: 50%; background: #7aad72; display: inline-block; }
+    .io-btn {
+      padding: 5px 12px; border: 1px solid rgba(196,149,106,0.35); border-radius: 20px;
+      background: rgba(255,255,255,0.5); color: #a07850; cursor: pointer;
+      font-family: sans-serif; font-size: 11px; transition: all 0.15s;
+    }
+    .io-btn:hover { background: rgba(196,149,106,0.12); border-color: #c4956a; color: #7a5535; }
+
+    main { max-width: 520px; margin: 0 auto; padding: 16px 20px 60px; }
+    .view { animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+    .prompt-card { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 18px 22px; margin-bottom: 16px; backdrop-filter: blur(8px); border: 1px solid rgba(196,149,106,0.2); }
+    .prompt-card p { margin: 0; color: #7a5535; font-style: italic; font-size: 16px; line-height: 1.5; }
+
+    .drop-zone { border-radius: 20px; overflow: hidden; margin-bottom: 16px; border: 2px dashed rgba(196,149,106,0.35); background: rgba(255,255,255,0.5); transition: all 0.2s; cursor: pointer; position: relative; min-height: 180px; display: flex; align-items: center; justify-content: center; }
+    .drop-zone.dragging { border-color: #c4956a; background: rgba(196,149,106,0.08); }
+    .drop-zone.has-image { cursor: default; min-height: auto; }
+    .drop-zone-inner { text-align: center; padding: 32px 20px; color: #c4956a; }
+    .drop-zone-inner .icon { font-size: 36px; margin-bottom: 8px; }
+    .drop-zone-inner p { margin: 0; font-family: sans-serif; font-size: 14px; color: #a07850; }
+    .drop-zone-inner small { color: #c4a07a; font-style: italic; font-size: 12px; }
+    .drop-zone img { width: 100%; display: block; max-height: 340px; object-fit: cover; border-radius: 18px; }
+    .remove-img { position: absolute; top: 10px; right: 10px; background: rgba(90,62,43,0.7); color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+
+    .mood-card { background: rgba(255,255,255,0.5); border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; border: 1px solid rgba(196,149,106,0.15); }
+    .mood-label { margin: 0 0 10px; font-family: sans-serif; font-size: 11px; letter-spacing: 3px; color: #c4956a; text-transform: uppercase; }
+    .mood-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mood-btn { padding: 6px 14px; border: 1.5px solid rgba(196,149,106,0.25); border-radius: 40px; background: transparent; cursor: pointer; font-family: sans-serif; font-size: 13px; color: #a07850; transition: all 0.15s; display: flex; align-items: center; gap: 5px; }
+    .mood-btn.selected { border-color: #c4956a; background: rgba(196,149,106,0.15); color: #7a5535; }
+
+    textarea { width: 100%; padding: 16px 18px; border-radius: 16px; border: 1.5px solid rgba(196,149,106,0.3); background: rgba(255,255,255,0.6); font-family: 'Georgia', serif; font-size: 15px; color: #5a3e2b; line-height: 1.7; resize: vertical; outline: none; backdrop-filter: blur(8px); transition: border-color 0.2s; margin-bottom: 20px; }
+    textarea:focus { border-color: #c4956a; }
+    textarea::placeholder { color: #c4a07a; font-style: italic; }
+
+    .save-btn { width: 100%; padding: 16px; border-radius: 50px; border: none; cursor: pointer; background: linear-gradient(135deg,#d4a574,#c4956a,#b8845e); color: #fff; font-size: 16px; font-family: 'Georgia', serif; letter-spacing: 0.5px; box-shadow: 0 4px 20px rgba(196,149,106,0.4); transition: all 0.3s; }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .save-btn.saved { background: linear-gradient(135deg,#a8c5a0,#7aad72); box-shadow: 0 4px 20px rgba(120,180,110,0.35); }
+
+    .empty-state { text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.4); border-radius: 20px; border: 1.5px dashed rgba(196,149,106,0.3); }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state h2 { color: #7a5535; font-size: 18px; margin: 0 0 6px; font-weight: normal; }
+    .empty-state p { color: #a07850; font-family: sans-serif; font-size: 14px; margin: 0; }
+    .empty-state button { margin-top: 20px; padding: 10px 24px; border-radius: 40px; border: none; background: #c4956a; color: #fff; cursor: pointer; font-family: sans-serif; font-size: 14px; }
+
+    .entries { display: flex; flex-direction: column; gap: 16px; }
+    .entry-card { background: rgba(255,255,255,0.65); border-radius: 20px; overflow: hidden; cursor: pointer; border: 1px solid rgba(196,149,106,0.2); backdrop-filter: blur(8px); transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 12px rgba(196,149,106,0.1); }
+    .entry-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(196,149,106,0.22); }
+    .entry-card img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .entry-body { padding: 16px 18px; }
+    .entry-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .entry-date { font-family: sans-serif; font-size: 11px; color: #c4956a; letter-spacing: 1px; text-transform: uppercase; }
+    .entry-mood-tag { font-family: sans-serif; font-size: 12px; color: #a07850; background: rgba(196,149,106,0.12); padding: 2px 10px; border-radius: 20px; }
+    .entry-note { margin: 0; color: #5a3e2b; font-size: 15px; line-height: 1.6; font-style: italic; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    .back-btn { background: rgba(255,255,255,0.6); border: 1px solid rgba(196,149,106,0.3); border-radius: 40px; padding: 8px 16px; cursor: pointer; color: #7a5535; font-family: sans-serif; font-size: 13px; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px; }
+    .single-card { background: rgba(255,255,255,0.7); border-radius: 24px; overflow: hidden; border: 1px solid rgba(196,149,106,0.2); box-shadow: 0 8px 40px rgba(196,149,106,0.15); }
+    .single-card img { width: 100%; display: block; max-height: 380px; object-fit: cover; }
+    .single-body { padding: 24px; }
+    .single-meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .single-date { margin: 0 0 2px; font-family: sans-serif; font-size: 11px; color: #c4956a; letter-spacing: 2px; text-transform: uppercase; }
+    .single-time { margin: 0; font-family: sans-serif; font-size: 12px; color: #a07850; }
+    .single-mood-tag { font-family: sans-serif; font-size: 13px; color: #7a5535; background: rgba(196,149,106,0.15); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(196,149,106,0.25); }
+    .single-note { margin: 0; color: #5a3e2b; font-size: 17px; line-height: 1.75; font-style: italic; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(60px); background: #5a3e2b; color: #fff; padding: 10px 22px; border-radius: 40px; font-family: sans-serif; font-size: 13px; opacity: 0; transition: all 0.3s; pointer-events: none; white-space: nowrap; z-index: 999; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <p class="subtitle">Daily Gratitude</p>
+  <h1>My Little Sanctuary</h1>
+  <div class="today-date" id="todayDate"></div>
+  <div class="nav">
+    <button class="nav-btn active" id="btnNew" onclick="showView('new')">✦ New Entry</button>
+    <button class="nav-btn" id="btnGallery" onclick="showView('gallery')">📖 My Diary (0)</button>
+  </div>
+  <div class="storage-bar">
+    <div class="storage-status"><span class="storage-dot"></span> <span id="storageLabel">Auto-saving on</span></div>
+    <button class="io-btn" onclick="exportDiary()">⬇ Export</button>
+    <button class="io-btn" onclick="document.getElementById('importFile').click()">⬆ Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDiary(event)" />
+  </div>
+</header>
+
+<main>
+  <!-- NEW ENTRY -->
+  <div class="view" id="viewNew">
+    <div class="prompt-card"><p id="promptText"></p></div>
+
+    <div class="drop-zone" id="dropZone" onclick="onDropZoneClick()" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave()">
+      <div class="drop-zone-inner" id="dropInner">
+        <div class="icon">🌸</div>
+        <p>Drop a photo or tap to choose</p>
+        <small>capture this beautiful moment</small>
+      </div>
+      <img id="previewImg" class="hidden" alt="Your moment" />
+      <button class="remove-img hidden" id="removeBtn" onclick="removeImage(event)">✕</button>
+    </div>
+    <input type="file" accept="image/*" id="fileInput" style="display:none" onchange="onFileChosen(event)" />
+
+    <div class="mood-card">
+      <p class="mood-label">How does this make you feel?</p>
+      <div class="mood-btns" id="moodBtns"></div>
+    </div>
+
+    <textarea id="noteInput" rows="5" placeholder="Write your gratitude here... what are you thankful for? What do you want to remember?"></textarea>
+    <button class="save-btn" id="saveBtn" onclick="saveEntry()" disabled>✦ Save this Moment</button>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="view hidden" id="viewGallery">
+    <div id="emptyState" class="empty-state">
+      <div class="icon">🌱</div>
+      <h2>Your diary is empty</h2>
+      <p>Start capturing moments you're grateful for</p>
+      <button onclick="showView('new')">Add First Entry</button>
+    </div>
+    <div class="entries hidden" id="entriesList"></div>
+  </div>
+
+  <!-- SINGLE ENTRY -->
+  <div class="view hidden" id="viewSingle">
+    <button class="back-btn" onclick="showView('gallery')">← Back to Diary</button>
+    <div class="single-card" id="singleCard"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const PROMPTS = [
+    "What made you smile today?",
+    "Who are you grateful for right now?",
+    "What small moment brought you joy?",
+    "What beauty did you notice today?",
+    "What are you thankful for in this photo?",
+    "What does this moment mean to you?",
+    "How did this make your heart feel?",
+  ];
+  const MOODS = [
+    { emoji: "🌸", label: "Peaceful" },
+    { emoji: "✨", label: "Grateful" },
+    { emoji: "🌊", label: "Moved" },
+    { emoji: "☀️", label: "Joyful" },
+    { emoji: "🌿", label: "Grounded" },
+  ];
+  const LS_KEY = 'gratitude_diary_entries';
+
+  let entries = [];
+  let currentImage = null;
+  let currentMood = null;
+
+  // ── localStorage helpers ──────────────────────────────
+  function saveToStorage() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(entries));
+    } catch(e) {
+      showToast('⚠ Storage full — try exporting & clearing old entries');
+    }
+  }
+
+  function loadFromStorage() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      entries = parsed.map(e => ({ ...e, date: new Date(e.date) }));
+      updateGalleryCount();
+    } catch(e) { /* ignore corrupt data */ }
+  }
+
+  // ── Export / Import ───────────────────────────────────
+  function exportDiary() {
+    if (entries.length === 0) { showToast('Nothing to export yet 🌱'); return; }
+    const data = JSON.stringify(entries, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gratitude-diary-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`✦ Exported ${entries.length} entr${entries.length===1?'y':'ies'}`);
+  }
+
+  function importDiary(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!Array.isArray(parsed)) throw new Error('Invalid format');
+        // Merge: avoid duplicates by id
+        const existingIds = new Set(entries.map(x => x.id));
+        const incoming = parsed
+          .filter(x => x.id && !existingIds.has(x.id))
+          .map(x => ({ ...x, date: new Date(x.date) }));
+        entries = [...entries, ...incoming].sort((a,b) => new Date(b.date) - new Date(a.date));
+        saveToStorage();
+        updateGalleryCount();
+        showToast(`🌸 Imported ${incoming.length} new entr${incoming.length===1?'y':'ies'}`);
+        if (document.getElementById('viewGallery').classList.contains('hidden') === false) renderGallery();
+      } catch(err) {
+        showToast('⚠ Could not read file — is it a valid diary export?');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Toast ─────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── Init ──────────────────────────────────────────────
+  loadFromStorage();
+  document.getElementById('todayDate').textContent = formatDate(new Date());
+  document.getElementById('promptText').textContent = `"${PROMPTS[Math.floor(Math.random() * PROMPTS.length)]}"`;
+
+  const moodContainer = document.getElementById('moodBtns');
+  MOODS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'mood-btn';
+    btn.innerHTML = `<span>${m.emoji}</span> ${m.label}`;
+    btn.dataset.label = m.label;
+    btn.onclick = () => toggleMood(m.label);
+    moodContainer.appendChild(btn);
+  });
+
+  document.getElementById('noteInput').addEventListener('input', updateSaveBtn);
+
+  // ── Helpers ───────────────────────────────────────────
+  function formatDate(date) {
+    return new Intl.DateTimeFormat('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }).format(date);
+  }
+  function formatTime(date) {
+    return new Intl.DateTimeFormat('en-US', { hour:'numeric', minute:'2-digit', hour12:true }).format(date);
+  }
+  function updateGalleryCount() {
+    document.getElementById('btnGallery').textContent = `📖 My Diary (${entries.length})`;
+  }
+
+  function showView(v) {
+    ['new','gallery','single'].forEach(name => {
+      document.getElementById('view' + name[0].toUpperCase() + name.slice(1)).classList.add('hidden');
+    });
+    document.getElementById('view' + v[0].toUpperCase() + v.slice(1)).classList.remove('hidden');
+    document.getElementById('btnNew').classList.toggle('active', v === 'new');
+    document.getElementById('btnGallery').classList.toggle('active', v === 'gallery');
+    if (v === 'gallery') renderGallery();
+  }
+
+  function toggleMood(label) {
+    currentMood = currentMood === label ? null : label;
+    document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.toggle('selected', btn.dataset.label === currentMood));
+  }
+
+  function onDropZoneClick() { if (!currentImage) document.getElementById('fileInput').click(); }
+  function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('dragging'); handleFile(e.dataTransfer.files[0]); }
+  function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragging'); }
+  function onDragLeave() { document.getElementById('dropZone').classList.remove('dragging'); }
+  function onFileChosen(e) { handleFile(e.target.files[0]); }
+
+  function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      currentImage = e.target.result;
+      const img = document.getElementById('previewImg');
+      img.src = currentImage;
+      img.classList.remove('hidden');
+      document.getElementById('dropInner').classList.add('hidden');
+      document.getElementById('removeBtn').classList.remove('hidden');
+      document.getElementById('dropZone').classList.add('has-image');
+      updateSaveBtn();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeImage(e) {
+    e.stopPropagation();
+    currentImage = null;
+    document.getElementById('previewImg').classList.add('hidden');
+    document.getElementById('previewImg').src = '';
+    document.getElementById('removeBtn').classList.add('hidden');
+    document.getElementById('dropInner').classList.remove('hidden');
+    document.getElementById('dropZone').classList.remove('has-image');
+    document.getElementById('fileInput').value = '';
+    updateSaveBtn();
+  }
+
+  function updateSaveBtn() {
+    const note = document.getElementById('noteInput').value.trim();
+    document.getElementById('saveBtn').disabled = !currentImage && !note;
+  }
+
+  async function saveEntry() {
+    const note = document.getElementById('noteInput').value.trim();
+    if (!currentImage && !note) return;
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    await new Promise(r => setTimeout(r, 700));
+
+    entries.unshift({ id: Date.now(), image: currentImage, note, mood: currentMood, date: new Date() });
+    saveToStorage();
+    updateGalleryCount();
+
+    btn.classList.add('saved'); btn.textContent = '✓ Saved with love';
+    setTimeout(() => {
+      btn.classList.remove('saved'); btn.textContent = '✦ Save this Moment';
+      currentImage = null; currentMood = null;
+      document.getElementById('noteInput').value = '';
+      document.getElementById('previewImg').classList.add('hidden');
+      document.getElementById('previewImg').src = '';
+      document.getElementById('removeBtn').classList.add('hidden');
+      document.getElementById('dropInner').classList.remove('hidden');
+      document.getElementById('dropZone').classList.remove('has-image');
+      document.getElementById('fileInput').value = '';
+      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+      updateSaveBtn();
+      showView('gallery');
+    }, 1200);
+  }
+
+  function renderGallery() {
+    updateGalleryCount();
+    const empty = document.getElementById('emptyState');
+    const list = document.getElementById('entriesList');
+    if (entries.length === 0) { empty.classList.remove('hidden'); list.classList.add('hidden'); return; }
+    empty.classList.add('hidden'); list.classList.remove('hidden');
+    list.innerHTML = '';
+    entries.forEach(entry => {
+      const card = document.createElement('div');
+      card.className = 'entry-card';
+      card.onclick = () => showSingle(entry.id);
+      const mood = MOODS.find(m => m.label === entry.mood);
+      card.innerHTML = `
+        ${entry.image ? `<img src="${entry.image}" alt="" />` : ''}
+        <div class="entry-body">
+          <div class="entry-meta">
+            <span class="entry-date">${formatDate(entry.date)}</span>
+            ${mood ? `<span class="entry-mood-tag">${mood.emoji} ${mood.label}</span>` : ''}
+          </div>
+          ${entry.note ? `<p class="entry-note">${entry.note}</p>` : ''}
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  function showSingle(id) {
+    const entry = entries.find(e => e.id === id);
+    if (!entry) return;
+    const mood = MOODS.find(m => m.label === entry.mood);
+    document.getElementById('singleCard').innerHTML = `
+      ${entry.image ? `<img src="${entry.image}" alt="" />` : ''}
+      <div class="single-body">
+        <div class="single-meta">
+          <div>
+            <p class="single-date">${formatDate(entry.date)}</p>
+            <p class="single-time">${formatTime(entry.date)}</p>
+          </div>
+          ${mood ? `<span class="single-mood-tag">${mood.emoji} ${mood.label}</span>` : ''}
+        </div>
+        ${entry.note ? `<p class="single-note">${entry.note}</p>` : ''}
+      </div>`;
+    showView('single');
+  }
+</script>
+</body>
+</html>
